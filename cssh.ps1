@@ -1,5 +1,5 @@
 # Chemin vers le fichier de données
-$dataFile = "C:\Users\rachel\Documents\data.json"
+$dataFile = "C:\PATH\TO\data.json"
 
 # Déclarer les hashtables
 $global:Servers = @{}
