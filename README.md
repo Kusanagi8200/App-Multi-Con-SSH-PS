@@ -1,2 +1,3 @@
-# App-ssh-windows
-App Multi ssh connexion Windows PowerShell scripts
+# App-Multi-Con-SSH-PS
+
+App Multi ssh connexion in PowerShell script.
