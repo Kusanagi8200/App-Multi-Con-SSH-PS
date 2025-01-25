@@ -1,5 +1,9 @@
+# Modifier l'encodage du terminal pour UTF-8
+# chcp 65001
+$OutputEncoding = New-Object -typename System.Text.UTF8Encoding
+
 # Chemin vers le fichier de données
-$dataFile = "C:\PATH\TO\data.json"
+$dataFile = "C:\Users\Administrateur.Windows-11\GitHub\App-Multi-Con-SSH-PS\data.json"
 
 # Déclarer les hashtables
 $global:Servers = @{}
@@ -15,7 +19,7 @@ if (Test-Path $dataFile) {
         }
         $global:ServerKeys = $jsonData.ServerKeys
     } catch {
-        Write-Host "Erreur lors du chargement des données depuis $dataFile" -ForegroundColor Red
+        Write-Host "ERREUR LORS DU CHARGEMENT DES DONNEES" $dataFile" -ForegroundColor Red
     }
 }
 
@@ -28,13 +32,13 @@ function Save-Data {
 
         $jsonData | Out-File -FilePath $dataFile
     } catch {
-        Write-Host "Erreur lors de la sauvegarde des données dans $dataFile" -ForegroundColor Red
+        Write-Host "ERREUR LORS DE LA SAUVEGARDE DES DONNEES" $dataFile" -ForegroundColor Red
     }
 }
 
 function Add-New-Connection {
-    $newName = Read-Host -Prompt "Nom de la nouvelle connexion"
-    $newAddress = Read-Host -Prompt "Adresse de la nouvelle connexion (user@ip)"
+    $newName = Read-Host -Prompt "NOM DE LA NOUVELLE CONNEXION"
+    $newAddress = Read-Host -Prompt "ADRESSE DE LA NOUVELLE CONNEXION (user@ip)"
 
     if ($newName -and $newAddress) {
         # Mettre à jour les tableaux avec la nouvelle connexion
@@ -43,50 +47,87 @@ function Add-New-Connection {
 
         Save-Data
 
-        Write-Host "Nouvelle connexion ajoutée avec succès !" -ForegroundColor Blue -BackgroundColor Green
+        Write-Host "NOUVELLE CONNEXION AJOUTEE AVEC SUCCES" -ForegroundColor Blue -BackgroundColor Green
     } else {
-        Write-Host "Le nom et l'adresse sont requis !" -ForegroundColor Red -BackgroundColor Green
+        Write-Host "LE NOM ET L'IP SONT REQUIS" -ForegroundColor Red -BackgroundColor Green
     }
 }
 
-function Delete-Connection {
-    Write-Host "Liste des connexions existantes:" -ForegroundColor White -BackgroundColor Green
+function Remove-Connection {
+    Write-Host "LISTE DES CONNEXIONS DISPONIBLES :" -ForegroundColor White -BackgroundColor Green
     for ($idx = 0; $idx -lt $global:ServerKeys.Length; $idx++) {
         $key = $global:ServerKeys[$idx]
         Write-Host "$idx) $key : $($global:Servers[$key])" -ForegroundColor White -BackgroundColor Green
     }
-    $delChoice = Read-Host -Prompt "Entrez le numéro de la connexion que vous souhaitez supprimer"
+
+    # Demander à l'utilisateur de sélectionner une connexion à supprimer
+    $delChoice = Read-Host -Prompt "NUMERO DE LA CONNEXION A SUPPRIMER"
 
     if ($delChoice -match '^\d+$' -and $delChoice -lt $global:ServerKeys.Length) {
         $key = $global:ServerKeys[$delChoice]
+
+        # Supprimer la connexion dans la liste des serveurs
         $global:Servers.Remove($key)
+        
+        # Supprimer la clé dans la liste ServerKeys
         $global:ServerKeys = $global:ServerKeys | Where-Object { $_ -ne $key }
+
+        # Sauvegarder les données après modification
         Save-Data
-        Write-Host "Connexion supprimée avec succès !" -ForegroundColor Red -BackgroundColor Green
+
+        Write-Host "CONNEXION SUPPRIMEE AVEC SUCCES" -ForegroundColor Red -BackgroundColor Green
     } else {
-        Write-Host "CHOIX INVALID" -ForegroundColor Red -BackgroundColor Green
+        Write-Host "CHOIX INVALIDE. VEUILLEZ ESSAYER À NOUVEAU" -ForegroundColor Red -BackgroundColor Green
+    }
+}
+
+# Fonction Save-Data pour vérifier l'écriture dans le fichier JSON
+function Save-Data {
+    try {
+        $jsonData = @{
+            ServerKeys = $global:ServerKeys
+            Servers = $global:Servers
+        } | ConvertTo-Json -Depth 3
+
+        # Sauvegarde dans le fichier JSON
+        $jsonData | Out-File -FilePath $dataFile
+
+        # Message de confirmation de sauvegarde
+        Write-Host "DONNEES SAUVEGARDEES dans $dataFile" -ForegroundColor Blue
+    }
+    catch {
+        Write-Host "ERREUR LORS DE LA SAUVEGARDE DES DONNEES" -ForegroundColor Red
     }
 }
 
 function Show-Menu {
     Write-Host "__________CONNEXIONS SSH___________" -ForegroundColor White -BackgroundColor Green
-    Write-Host ""
-    for ($idx = 0; $idx -lt $global:ServerKeys.Length; $idx++) {
-        $key = $global:ServerKeys[$idx]
-        Write-Host "$idx) $key : $($global:Servers[$key])" -ForegroundColor White -BackgroundColor Green
-        Write-Host ""
+    Write-Host ""  # Ligne vide
+
+    # Vérifier si des connexions sont disponibles
+    if ($global:ServerKeys.Count -eq 0) {
+        Write-Host "AUCUNE CONNEXION DISPONIBLE" -ForegroundColor Yellow
+    } else {
+        # Afficher les connexions existantes
+        for ($idx = 0; $idx -lt $global:ServerKeys.Length; $idx++) {
+            $key = $global:ServerKeys[$idx]
+            Write-Host "$idx $key : $($global:Servers[$key])" -ForegroundColor White -BackgroundColor Green
+            Write-Host ""  # Ajouter un espace entre les connexions
+        }
     }
-    Write-Host "/) SORTIR_____________________________" -ForegroundColor Black -BackgroundColor Green
-    Write-Host ""
-    Write-Host "+) NOUVELLE CONNEXION_____________" -ForegroundColor Black -BackgroundColor Green
-    Write-Host ""
-    Write-Host "-) SUPPRIMER CONNEXION______________" -ForegroundColor Black -BackgroundColor Green
-    Write-Host ""
+
+    Write-Host "/  SORTIR_____________________________" -ForegroundColor Black -BackgroundColor Green
+    Write-Host ""  # Ligne vide
+    Write-Host "+  NOUVELLE CONNEXION_____________" -ForegroundColor Black -BackgroundColor Green
+    Write-Host ""  # Ligne vide
+    Write-Host "-  SUPPRIMER CONNEXION______________" -ForegroundColor Black -BackgroundColor Green
+    Write-Host ""  # Ligne vide
 }
+
 
 while ($true) {
     Show-Menu
-    Write-Host "SÉLECTION : " -NoNewline -ForegroundColor Black -BackgroundColor Green
+    Write-Host "SELECTION : " -NoNewline -ForegroundColor Black -BackgroundColor Green
     $choice = Read-Host
 
     if ($choice -eq "/") {
@@ -94,14 +135,15 @@ while ($true) {
     } elseif ($choice -eq "+") {
         Add-New-Connection
     } elseif ($choice -eq "-") {
-        Delete-Connection
+        Remove-Connection
     } elseif ($choice -match '^\d+$' -and $choice -lt $global:ServerKeys.Length) {
         $key = $global:ServerKeys[$choice]
         if ($global:Servers[$key]) {
-            Write-Host "CONNEXION À $key..." -ForegroundColor Black -BackgroundColor Green
+            Write-Host "CONNEXION AU SERVEUR $key..." -ForegroundColor Black -BackgroundColor Green
             ssh $global:Servers[$key]
         }
     } else {
-        Write-Host "CHOIX INVALIDE" -ForegroundColor Black -BackgroundColor Green
+        Write-Host "CHOIX INVALIDE" -ForegroundColor Red -BackgroundColor Green
+        Start-Sleep -Seconds 2 # Ajoute un délai pour que l'utilisateur puisse voir l'erreur avant de recommencer
     }
 }
