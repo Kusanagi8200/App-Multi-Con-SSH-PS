@@ -3,7 +3,7 @@
 $OutputEncoding = New-Object -typename System.Text.UTF8Encoding
 
 # Chemin vers le fichier de données
-$dataFile = "C:\Users\Administrateur.Windows-11\GitHub\App-Multi-Con-SSH-PS\data.json"
+$dataFile = "data.json"
 
 # Déclarer les hashtables
 $global:Servers = @{}
@@ -19,20 +19,25 @@ if (Test-Path $dataFile) {
         }
         $global:ServerKeys = $jsonData.ServerKeys
     } catch {
-        Write-Host "ERREUR LORS DU CHARGEMENT DES DONNEES" $dataFile" -ForegroundColor Red
+        Write-Host "ERREUR LORS DU CHARGEMENT DES DONNEES" -ForegroundColor Red
     }
 }
 
 function Save-Data {
     try {
         $jsonData = @{
-            Servers = $global:Servers
             ServerKeys = $global:ServerKeys
+            Servers = $global:Servers
         } | ConvertTo-Json -Depth 3
 
-        $jsonData | Out-File -FilePath $dataFile
-    } catch {
-        Write-Host "ERREUR LORS DE LA SAUVEGARDE DES DONNEES" $dataFile" -ForegroundColor Red
+        # Sauvegarde dans le fichier JSON
+        $jsonData | Out-File -FilePath $dataFile -Encoding utf8
+
+        # Message de confirmation de sauvegarde
+        #Write-Host "DONNEES SAUVEGARDEES" $dataFile -ForegroundColor White
+    }
+    catch {
+        Write-Host "ERREUR LORS DE LA SAUVEGARDE DES DONNEES" -ForegroundColor Red
     }
 }
 
@@ -45,9 +50,10 @@ function Add-New-Connection {
         $global:ServerKeys += $newName
         $global:Servers[$newName] = $newAddress
 
+        # Sauvegarde des données après l'ajout
         Save-Data
 
-        Write-Host "NOUVELLE CONNEXION AJOUTEE AVEC SUCCES" -ForegroundColor Blue -BackgroundColor Green
+        Write-Host "NOUVELLE CONNEXION AJOUTEE AVEC SUCCES" -ForegroundColor Black -BackgroundColor Green
     } else {
         Write-Host "LE NOM ET L'IP SONT REQUIS" -ForegroundColor Red -BackgroundColor Green
     }
@@ -81,28 +87,9 @@ function Remove-Connection {
     }
 }
 
-# Fonction Save-Data pour vérifier l'écriture dans le fichier JSON
-function Save-Data {
-    try {
-        $jsonData = @{
-            ServerKeys = $global:ServerKeys
-            Servers = $global:Servers
-        } | ConvertTo-Json -Depth 3
-
-        # Sauvegarde dans le fichier JSON
-        $jsonData | Out-File -FilePath $dataFile
-
-        # Message de confirmation de sauvegarde
-        Write-Host "DONNEES SAUVEGARDEES dans $dataFile" -ForegroundColor Blue
-    }
-    catch {
-        Write-Host "ERREUR LORS DE LA SAUVEGARDE DES DONNEES" -ForegroundColor Red
-    }
-}
-
 function Show-Menu {
-    Write-Host "__________CONNEXIONS SSH___________" -ForegroundColor White -BackgroundColor Green
-    Write-Host ""  # Ligne vide
+    Write-Host "__________CONNEXIONS SSH___________" -ForegroundColor Black -BackgroundColor Green
+    Write-Host ""
 
     # Vérifier si des connexions sont disponibles
     if ($global:ServerKeys.Count -eq 0) {
@@ -111,11 +98,11 @@ function Show-Menu {
         # Afficher les connexions existantes
         for ($idx = 0; $idx -lt $global:ServerKeys.Length; $idx++) {
             $key = $global:ServerKeys[$idx]
-            Write-Host "$idx $key : $($global:Servers[$key])" -ForegroundColor White -BackgroundColor Green
-            Write-Host ""  # Ajouter un espace entre les connexions
+            Write-Host "$idx) $key : $($global:Servers[$key])" -ForegroundColor White -BackgroundColor Green
         }
     }
 
+    Write-Host ""  # Ligne vide
     Write-Host "/  SORTIR_____________________________" -ForegroundColor Black -BackgroundColor Green
     Write-Host ""  # Ligne vide
     Write-Host "+  NOUVELLE CONNEXION_____________" -ForegroundColor Black -BackgroundColor Green
@@ -123,7 +110,6 @@ function Show-Menu {
     Write-Host "-  SUPPRIMER CONNEXION______________" -ForegroundColor Black -BackgroundColor Green
     Write-Host ""  # Ligne vide
 }
-
 
 while ($true) {
     Show-Menu
