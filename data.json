@@ -1,7 +1,10 @@
 ﻿{
-    "ServerKeys":  "testtest1",
+    "ServerKeys":  [
+                       "TEST",
+                       "TEST2"
+                   ],
     "Servers":  {
-                    "test":  "root@172.16.98.132",
-                    "test1":  "root@162.136.325.23"
+                    "TEST":  "root@172.16.98.132",
+                    "TEST2":  "root@192.168.21.256"
                 }
 }
